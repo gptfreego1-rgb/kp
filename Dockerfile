@@ -2,7 +2,6 @@ FROM --platform=linux/amd64 ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install minimal GUI + VNC + noVNC
 RUN apt update && apt install -y --no-install-recommends \
     openbox \
     tigervnc-standalone-server \
@@ -15,12 +14,10 @@ RUN apt update && apt install -y --no-install-recommends \
     curl wget ca-certificates \
     && apt clean && rm -rf /var/lib/apt/lists/*
 
-# Setup VNC password
 RUN mkdir -p /root/.vnc && \
-    printf "password\npassword\n\n" | vncpasswd && \
+    echo "password" | vncpasswd -f > /root/.vnc/passwd && \
     chmod 600 /root/.vnc/passwd
 
-# Startup GUI
 RUN echo '#!/bin/sh\nopenbox-session &\ntint2 &\npcmanfm --desktop &' > /root/.vnc/xstartup && \
     chmod +x /root/.vnc/xstartup
 
