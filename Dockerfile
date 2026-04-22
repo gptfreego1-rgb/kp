@@ -14,9 +14,7 @@ RUN apt update && apt install -y --no-install-recommends \
     curl wget ca-certificates \
     && apt clean && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /root/.vnc && \
-    echo "password" | vncpasswd -f > /root/.vnc/passwd && \
-    chmod 600 /root/.vnc/passwd
+RUN mkdir -p /root/.vnc
 
 RUN echo '#!/bin/sh\nopenbox-session &\ntint2 &\npcmanfm --desktop &' > /root/.vnc/xstartup && \
     chmod +x /root/.vnc/xstartup
@@ -27,6 +25,6 @@ CMD bash -c "\
     Xtigervnc :1 \
     -geometry 1024x768 \
     -depth 24 \
-    -rfbauth /root/.vnc/passwd \
-    -localhost yes & \
+    -localhost yes \
+    -SecurityTypes None & \
     websockify --web=/usr/share/novnc/ 6080 localhost:5901"
