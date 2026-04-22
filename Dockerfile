@@ -1,6 +1,7 @@
 FROM --platform=linux/amd64 ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY=:1
 
 RUN apt update && apt install -y --no-install-recommends \
     openbox \
@@ -16,15 +17,23 @@ RUN apt update && apt install -y --no-install-recommends \
 
 RUN mkdir -p /root/.vnc
 
-RUN echo '#!/bin/sh\nopenbox-session &\ntint2 &\npcmanfm --desktop &' > /root/.vnc/xstartup && \
+RUN echo '#!/bin/sh\n\
+xrdb $HOME/.Xresources\n\
+openbox-session & \n\
+tint2 & \n\
+pcmanfm --desktop & \n\
+xterm' > /root/.vnc/xstartup && \
     chmod +x /root/.vnc/xstartup
 
 EXPOSE 6080 5901
 
 CMD bash -c "\
+    rm -f /tmp/.X1-lock /tmp/.X11-unix/X1; \
     Xtigervnc :1 \
     -geometry 1024x768 \
     -depth 24 \
-    -localhost yes \
-    -SecurityTypes None & \
+    -localhost no \
+    -SecurityTypes None \
+    -AlwaysShared & \
+    sleep 2; \
     websockify --web=/usr/share/novnc/ 6080 localhost:5901"
