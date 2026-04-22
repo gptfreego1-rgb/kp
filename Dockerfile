@@ -1,43 +1,26 @@
-FROM --platform=linux/amd64 alpine:3.19
+FROM ubuntu:22.04
 
-ENV DISPLAY=:1
-ENV USER=root
-ENV VNC_PASSWD=""
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install paket minimal
-RUN apk update && apk add --no-cache \
+# Install minimal GUI + VNC
+RUN apt update && apt install -y --no-install-recommends \
     openbox \
-    xfce4-terminal \
-    firefox-esr \
-    tigervnc \
-    novnc \
-    websockify \
-    bash \
-    sudo \
+    tigervnc-standalone-server \
+    novnc websockify \
+    xterm \
     dbus-x11 \
-    xauth \
-    tzdata \
-    curl \
-    git \
-    font-noto \
-    adwaita-icon-theme \
-    xrandr
+    firefox \
+    curl wget ca-certificates \
+    && apt clean && rm -rf /var/lib/apt/lists/*
 
-# Setup VNC dan noVNC
+# Setup VNC
 RUN mkdir -p /root/.vnc && \
-    echo "#!/bin/bash" > /root/.vnc/xstartup && \
-    echo "openbox-session &" >> /root/.vnc/xstartup && \
-    echo "firefox-esr &" >> /root/.vnc/xstartup && \
-    chmod +x /root/.vnc/xstartup && \
-    touch /root/.Xauthority && \
-    echo "" | vncpasswd -f > /root/.vnc/passwd && \
-    chmod 600 /root/.vnc/passwd
+    echo "#!/bin/sh\nopenbox-session &\nxterm &" > /root/.vnc/xstartup && \
+    chmod +x /root/.vnc/xstartup
 
-# Cleanup
-RUN rm -rf /var/cache/apk/*
-
+# Expose ports
 EXPOSE 5901 6080
 
-CMD bash -c "vncserver :1 -geometry 1280x720 -depth 24 -localhost no -SecurityTypes None && \
-    websockify -D --web=/usr/share/novnc/ 0.0.0.0:6080 localhost:5901 && \
-    tail -f /dev/null"
+CMD bash -c "\
+    vncserver :1 -geometry 1024x768 -localhost no -SecurityTypes None && \
+    websockify --web=/usr/share/novnc/ 6080 localhost:5901"
